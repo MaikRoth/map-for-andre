@@ -10,7 +10,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-3 scrollable-container">
             <app-player [participatingPlayers]="game?.participating_players"
                 [playerData]="game?.round_states?.get(activeButton)?.player_name_player_map"
                 [colorMap]="playerColors"></app-player>
@@ -23,13 +23,15 @@
                             <div *ngIf="planet.resources; else noResource">
                                 <div class="planet-infos">
                                     <div class="image">
-                                      <img [src]="getResourceImage(planet.resources[0])" class="resource-image" alt="material-image" title="{{ planet.resources[0] }}">
-                                      <div class="tooltip">{{ planet.resources[1] }}</div>
+                                        <img [src]="getResourceImage(planet.resources[0])" class="resource-image"
+                                            alt="material-image" title="{{ planet.resources[0] }}">
+                                        <div class="tooltip">{{ planet.resources[1] }}</div>
                                     </div>
                                     <div class="amount">
-                                      <span class="formatted-amount" [attr.title]="planet.resources[1]">{{ formatAmount(planet.resources[1]) }}</span>
+                                        <span class="formatted-amount" [attr.title]="planet.resources[1]">{{
+                                            formatAmount(planet.resources[1]) }}</span>
                                     </div>
-                                  </div>   
+                                </div>
                             </div>
                             <ng-template #noResource>
                                 <div class="no-resource"></div>
@@ -38,7 +40,7 @@
                             <div class="robot-container">
                                 <div *ngFor="let robot of getRobotsOnPlanet(planet.planet_id)">
                                     <img src='https://robohash.org/{{robot.robot_id}}.png' alt=""
-                                    [style.border-color]="getPlayerColor(robot.robot_id)" class="robot-image">
+                                        [style.border-color]="getPlayerColor(robot.robot_id)" class="robot-image">
                                 </div>
                             </div>
                         </div>
