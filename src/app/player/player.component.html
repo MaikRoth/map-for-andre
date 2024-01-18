@@ -1,0 +1,51 @@
+<div class="player-container" *ngFor="let player of displayedPlayers">
+    <div class="player-info">
+        <div class="player-name " [style.color]="colorMap.get(player.player_name)">{{ player.player_name }}</div>
+        <div class="player-money">Money: ${{ player.money.amount }}</div>
+    </div>
+    <div class="robot-container">
+        <div class="robot-info" *ngFor="let robot of getRobotValues(player.robots)">
+            <div class="robot-id clickable" (click)="copyToClipboard(robot.robot_id)">Robot ID</div>
+            <div class="planet-id clickable" (click)="copyToClipboard(robot.planet_id)">Planet ID</div>
+            <div class="Vitals-title"><strong><u>Vitals:</u></strong></div>
+            <div class="robot-health">Health: {{ robot.health }}</div>
+            <div class="robot-energy">Energy: {{ robot.energy }}</div>
+            <div class="robot-levels">
+                <div class="level-title"><strong><u>Levels:</u></strong></div>
+                <div *ngIf="robot.levels.health_level !== 'LEVEL0'" class="level-item">Health: {{
+                    robot.levels.health_level }}</div>
+                <div *ngIf="robot.levels.damage_level !== 'LEVEL0'" class="level-item">Damage: {{
+                    robot.levels.damage_level }}</div>
+                <div *ngIf="robot.levels.mining_level !== 'LEVEL0'" class="level-item">Mining: {{
+                    robot.levels.mining_level }}</div>
+                <div *ngIf="robot.levels.mining_speed_level !== 'LEVEL0'" class="level-item">Mining Speed: {{
+                    robot.levels.mining_speed_level }}</div>
+                <div *ngIf="robot.levels.energy_level !== 'LEVEL0'" class="level-item">Energy: {{
+                    robot.levels.energy_level }}</div>
+                <div *ngIf="robot.levels.energy_regen_level !== 'LEVEL0'" class="level-item">Energy Regen: {{
+                    robot.levels.energy_regen_level }}</div>
+                <div *ngIf="robot.levels.storage_level !== 'LEVEL0'" class="level-item">Storage: {{
+                    robot.levels.storage_level }}</div>
+            </div>
+            <div class="robot-inventory">
+                <div class="inventory-title"><strong><u>Inventory:</u></strong></div>
+                <div *ngIf="robot.inventory.COAL !== undefined" class="inventory-item">COAL: {{ robot.inventory.COAL }}
+                </div>
+                <div *ngIf="robot.inventory.IRON !== undefined" class="inventory-item">IRON: {{ robot.inventory.IRON }}
+                </div>
+                <div *ngIf="robot.inventory.GEM !== undefined" class="inventory-item">GEM: {{ robot.inventory.GEM }}
+                </div>
+                <div *ngIf="robot.inventory.PLATINUM !== undefined" class="inventory-item">PLATINUM: {{
+                    robot.inventory.PLATINUM }}</div>
+                <div *ngIf="robot.inventory.GOLD !== undefined" class="inventory-item">GOLD: {{ robot.inventory.GOLD }}
+                </div>
+            </div>
+            <div class="killed-robots">
+                <div class="title"><strong><u>Killed Robots:</u></strong></div>
+                <div *ngFor="let robotData of getKilledRobotData(player)">
+                    Robot ID: {{ robotData[0] }} (Enemy Robot ID: {{ robotData[1] }})
+                </div>
+              </div>
+        </div>
+    </div>
+</div>

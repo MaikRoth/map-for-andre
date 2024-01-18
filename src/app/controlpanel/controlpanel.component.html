@@ -1,0 +1,11 @@
+<div class="form-floating mb-3">
+    <input type="number" class="form-control" id="floatingInput" placeholder="6" [(ngModel)]="maxPlayer">
+    <label for="floatingInput">Max Players</label>
+  </div>
+  <div class="form-floating mb-3">
+    <input type="number" class="form-control" id="floatingInput" placeholder="50" [(ngModel)]="maxRounds">
+    <label for="floatingInput">Max Rounds</label>
+  </div>
+<button (click)="createGame(maxPlayer,maxRounds)">Create Game</button>
+
+
