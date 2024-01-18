@@ -4,9 +4,6 @@ import { ControlpanelComponent } from './controlpanel/controlpanel.component';
 import { MapComponent } from './map/map.component';
 
 const routes: Routes = [
-  {path: 'controlpanel', component: ControlpanelComponent},
-  {path: 'map', component: MapComponent},
-  {path: '', redirectTo: '/controlpanel', pathMatch: 'full' }
 ];
 
 @NgModule({

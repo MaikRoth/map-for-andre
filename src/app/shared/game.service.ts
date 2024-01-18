@@ -12,20 +12,20 @@ export class GameService {
 
   constructor(private http: HttpClient) { }
 
-  fetchGame(): Observable<Game> {
-    return this.http.get<Game>(this.endpoint).pipe(
-      map((response: any) => {
-        const gameData = {
-          current_round: response[0].current_round,
-          game_id: response[0].game_id,
-          max_players: response[0].max_players,
-          max_rounds: response[0].max_rounds,
-          participating_players: response[0].participating_players,
+  fetchGames(): Observable<Game[]> {
+    return this.http.get<Game[]>(this.endpoint).pipe(
+      map((response: any[]) => {
+        const games: Game[] = response.map((gameData: any) => ({
+          current_round: gameData.current_round,
+          game_id: gameData.game_id,
+          max_players: gameData.max_players,
+          max_rounds: gameData.max_rounds,
+          participating_players: gameData.participating_players,
           round_states: new Map<string, RoundState>(
-            Object.entries(response[0].round_states).map(([key, value]) => [key, value as RoundState])
+            Object.entries(gameData.round_states).map(([key, value]) => [key, value as RoundState])
           )
-        } as Game;
-        return gameData;
+        }));
+        return games;
       })
     );
   }

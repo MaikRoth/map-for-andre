@@ -18,7 +18,6 @@ export class ControlpanelComponent {
       max_players: maxPlayers,
       max_rounds: maxRounds
     }
-
     this.gameService.createGame(params)
   }
 }

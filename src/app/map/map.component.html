@@ -1,23 +1,37 @@
+<div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+    <div class="btn-group me-2" role="group">
+      <div class="game-list">
+        <button *ngFor="let game of games; let i = index" type="button" class="btn btn-secondary"
+                [ngClass]="{'highlighted': highlightedGame === i}" (click)="setHighlightedGame(i)">
+          Game {{ i }}
+        </button>
+      </div>
+    </div>
+  </div>
+  
 <div class="container" style="padding: 0; margin: 0">
     <div class="row">
         <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
             <div class="btn-group me-2" role="group">
-                <button *ngFor="let round of roundKeys" type="button" class="btn btn-secondary"
-                    [ngClass]="{'highlighted': activeButton === round}" (click)="setActiveButton(round)">
-                    {{ round }}
-                </button>
+                <div class="d-flex flex-wrap">
+                    <button *ngFor="let round of roundKeys" type="button" class="btn btn-secondary"
+                        [ngClass]="{'highlighted': highlightedState === round}" (click)="setActiveButton(round)">
+                        {{ round }}
+                    </button>
+                </div>
             </div>
         </div>
     </div>
+    
     <div class="row">
         <div class="col-md-3 scrollable-container">
-            <app-player [participatingPlayers]="game?.participating_players"
-                [playerData]="game?.round_states?.get(activeButton)?.player_name_player_map"
+            <app-player [participatingPlayers]="games[highlightedGame]?.participating_players"
+                [playerData]="games[highlightedGame]?.round_states?.get(highlightedState)?.player_name_player_map"
                 [colorMap]="playerColors"></app-player>
         </div>
         <div class="col-md-9">
             <table>
-                <tr *ngFor="let row of game?.round_states?.get(activeButton)?.map?.planets">
+                <tr *ngFor="let row of games[highlightedGame]?.round_states?.get(highlightedState)?.map?.planets">
                     <td *ngFor="let planet of row">
                         <div *ngIf="planet; else voidCell">
                             <div *ngIf="planet.resources; else noResource">
@@ -36,7 +50,6 @@
                             <ng-template #noResource>
                                 <div class="no-resource"></div>
                             </ng-template>
-
                             <div class="robot-container">
                                 <div *ngFor="let robot of getRobotsOnPlanet(planet.planet_id)">
                                     <img src='https://robohash.org/{{robot.robot_id}}.png' alt=""

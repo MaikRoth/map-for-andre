@@ -116,3 +116,46 @@ td {
 .amount:hover .tooltip {
     display: block;
 }
+
+/* Add custom dropdown styles */
+.custom-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .custom-dropdown .dropdown-toggle {
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    color: #333;
+  }
+  .game-list {
+    max-height: 200px; 
+    overflow-y: auto;
+  }
+  .custom-dropdown .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    display: none;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-top: none;
+  }
+  
+  .custom-dropdown .dropdown-menu li {
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+  .custom-dropdown .dropdown-menu li:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .custom-dropdown.open .dropdown-menu {
+    display: block;
+  }
+  

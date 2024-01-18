@@ -5,7 +5,6 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { HeaderComponent } from './header/header.component';
 import { ControlpanelComponent } from './controlpanel/controlpanel.component';
 import { MapComponent } from './map/map.component';
 import { PlayerComponent } from './player/player.component';
@@ -13,7 +12,6 @@ import { PlayerComponent } from './player/player.component';
 @NgModule({
   declarations: [
     AppComponent,
-    HeaderComponent,
     ControlpanelComponent,
     MapComponent,
     PlayerComponent
@@ -22,7 +20,7 @@ import { PlayerComponent } from './player/player.component';
     BrowserModule,
     AppRoutingModule,
     FormsModule,
-    HttpClientModule
+    HttpClientModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -10,12 +10,14 @@ import { Game } from '../shared/types';
 })
 export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
-  game: Game;
-  activeButton: string = "0";
+  games: Game[];
+  highlightedGame : number | null = 0;
+  isDropdownOpen: boolean = false;
+  highlightedState: string = '0';
   roundKeys: string[] = [];
   playerColors = new Map<string, string>();
   private colorsAssigned: boolean = false;
-
+  private alwaysShowLast = true;
   private gameSubscription: Subscription;
 
   constructor(private gameService: GameService) {
@@ -23,13 +25,14 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   }
   ngOnInit(): void {
     this.gameSubscription = interval(1000).subscribe(() => {
-      this.gameService.fetchGame().subscribe(game => {
-        this.game = game;
-        if (this.game?.round_states) {
-          this.roundKeys = Array.from(this.game.round_states.keys());
+      this.gameService.fetchGames().subscribe(game => {
+        this.games = game;
+        if (this.games[this.highlightedGame]?.round_states && this.alwaysShowLast) {
+          this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
+          this.highlightedState = (this.roundKeys.length-1).toString();
         }
 
-        if (this.game?.participating_players && !this.colorsAssigned) {
+        if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
           this.assignRandomColors();
           this.colorsAssigned = true;
         }
@@ -37,13 +40,16 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
   assignRandomColors() {
-    const players = this.game.participating_players;
+    const players = this.games[this.highlightedGame].participating_players;
 
     players.forEach(player => {
       const color = this.generateRandomColor();
       this.playerColors.set(player, color);
     });
 
+  }
+  setHighlightedGame(index){
+    this.highlightedGame = index;
   }
   generateRandomColor(): string {
     const r = Math.floor(Math.random() * 256);
@@ -55,16 +61,16 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     return hexColor;
   }
   ngOnChanges() {
-    if (this.game?.round_states) {
-      this.roundKeys = Array.from(this.game.round_states.keys());
+    if (this.games[this.highlightedGame]?.round_states) {
+      this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
     }
   }
   setActiveButton(round: string) {
-    this.activeButton = round;
+    this.highlightedState = round;
   }
   getRobotsOnPlanet(planetId: string): any[] {
     const robotsOnPlanet = [];
-    const playerData = this.game?.round_states?.get(this.activeButton)?.player_name_player_map;
+    const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
     if (playerData) {
       for (const player of Object.values(playerData)) {
         for (const robotId of Object.keys(player.robots)) {
@@ -78,7 +84,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     return robotsOnPlanet;
   }
   getPlayerColor(robotId: string) {
-    const playerData = this.game?.round_states?.get(this.activeButton)?.player_name_player_map;
+    const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
     if (playerData) {
       for (const player of Object.values(playerData)) {
         for (const robot of Object.keys(player.robots)) {
