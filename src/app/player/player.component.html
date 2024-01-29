@@ -5,8 +5,8 @@
     </div>
     <div class="robot-container">
         <div class="robot-info" *ngFor="let robot of getRobotValues(player.robots)">
-            <div class="robot-id clickable" (click)="copyToClipboard(robot.robot_id)">Robot ID</div>
-            <div class="planet-id clickable" (click)="copyToClipboard(robot.planet_id)">Planet ID</div>
+            <div class="robot-id " (click)="copyToClipboard(robot.robot_id)"><div class="clickable">Robot ID:</div> {{robot.robot_id}}</div>
+            <div class="planet-id " (click)="copyToClipboard(robot.planet_id)"><div class="clickable">Planet ID: </div>{{robot.planet_id}}</div>
             <div class="Vitals-title"><strong><u>Vitals:</u></strong></div>
             <div class="robot-health">Health: {{ robot.health }}</div>
             <div class="robot-energy">Energy: {{ robot.energy }}</div>
