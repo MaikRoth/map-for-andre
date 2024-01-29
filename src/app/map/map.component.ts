@@ -171,17 +171,17 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   getResourceImage(resource: string) {
     switch (resource) {
       case 'COAL':
-        return '../assets/images/materials/coal.png'
+        return '../assets/material_sprites/coal.png'
       case 'IRON':
-        return '../assets/images/materials/iron.png'
+        return '../assets/material_sprites/iron.png'
       case 'GEM':
-        return '../assets/images/materials/gem.png'
+        return '../assets/material_sprites/gem.png'
       case 'GOLD':
-        return '../assets/images/materials/gold.png'
+        return '../assets/material_sprites/gold.png'
       case 'PLATINUM':
-        return '../assets/images/materials/platin.png'
+        return '../assets/material_sprites/platin.png'
       case 'VOID':
-        return '../assets/images/materials/void.png'
+        return '../assets/material_sprites/void.png'
       default:
         return ''
     }
