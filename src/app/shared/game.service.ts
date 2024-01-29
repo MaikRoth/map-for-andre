@@ -30,16 +30,20 @@ export class GameService {
     );
   }
 
-  createGame(params){
-    this.http.post(this.endpoint,params).subscribe(
+  createGame(params) {
+    this.http.post(this.endpoint, params).subscribe(
       response => {
         console.log(response)
       },
       error => {
         console.log(error);
-        
+
       }
     )
   }
 
+  sendCommand(gameId: string, params) {
+    const url = `http://0.0.0.0:8080/games/${gameId}/commands`
+    this.http.post(url,params).subscribe(res => console.log(res));
+  }
 }

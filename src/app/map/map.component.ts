@@ -11,11 +11,12 @@ import { Game } from '../shared/types';
 export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
   games: Game[];
-  highlightedGame : number | null = 0;
+  highlightedGame: number | null = 0;
   isDropdownOpen: boolean = false;
   highlightedState: string = '0';
   roundKeys: string[] = [];
   playerColors = new Map<string, string>();
+  upgrade = ""
   private colorsAssigned: boolean = false;
   private alwaysShowLast = true;
   private gameSubscription: Subscription;
@@ -29,7 +30,6 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
         this.games = game;
         if (this.games[this.highlightedGame]?.round_states && this.alwaysShowLast) {
           this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
-          this.highlightedState = (this.roundKeys.length-1).toString();
         }
 
         if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
@@ -48,7 +48,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     });
 
   }
-  setHighlightedGame(index){
+  setHighlightedGame(index) {
     this.highlightedGame = index;
   }
   generateRandomColor(): string {
@@ -65,7 +65,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
       this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
     }
   }
-  setActiveButton(round: string) {
+  setState(round: string) {
     this.highlightedState = round;
   }
   getRobotsOnPlanet(planetId: string): any[] {
@@ -101,6 +101,72 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
       return `${formatted}k`;
     }
     return amount.toString();
+  }
+  sendCommand(command: string, upgrade: string = "") {
+    switch (command) {
+      case "SELLING":
+        const params4 = [
+          {
+            player_name: "TheLegend27",
+            game_id: this.games[this.highlightedGame].game_id,
+            command_type: command,
+            command_object: {
+              robot_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0]}`,
+
+            }
+          }
+        ]
+        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params4)
+      case "BUYING":
+        const params2 = [
+          {
+            player_name: "TheLegend27", game_id: this.games[this.highlightedGame].game_id,
+            command_type: command,
+            command_object: {
+              item_name: "ROBOT",
+              item_quantity: 1
+            }
+          }
+        ]
+        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params2)
+      case "MINING":
+        const params1 = [
+          {
+            player_name: "TheLegend27", game_id: this.games[this.highlightedGame].game_id,
+            command_type: command,
+            command_object: {
+              robot_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0]}`,
+              target_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0].planet_id}`
+            }
+          }
+        ]
+        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params1)
+        break;
+      case "MOVEMENT":
+        const params3 = [
+          {
+            player_name: "TheLegend27", game_id: this.games[this.highlightedGame].game_id,
+            command_type: command,
+            command_object: {
+              robot_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0]}`,
+              target_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0].planet_id}`
+            }
+          }
+        ]
+        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params3)
+        break;
+      default:
+        const params = [
+          {
+            player_name: "TheLegend27", game_id: this.games[this.highlightedGame].game_id,
+            command_type: "REGENERATE",
+            command_object: {
+              robot_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0]}`,
+            }
+          }
+        ]
+        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params)
+    }
   }
   getResourceImage(resource: string) {
     switch (resource) {
