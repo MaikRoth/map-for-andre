@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row" *ngIf="games; else noGames">
         <div class="col-md-3 scrollable-container">
             <app-player [participatingPlayers]="games[highlightedGame]?.participating_players"
                 [playerData]="games[highlightedGame]?.round_states?.get(highlightedState)?.player_name_player_map"
@@ -52,8 +52,9 @@
                             </ng-template>
                             <div class="robot-container">
                                 <div *ngFor="let robot of getRobotsOnPlanet(planet.planet_id)">
-                                    <img *ngIf="robot.health > 0" src='https://robohash.org/{{robot.robot_id}}.png' alt=""
-                                        [style.border-color]="getPlayerColor(robot.robot_id)" class="robot-image">
+                                    <img *ngIf="robot.health > 0" src='https://robohash.org/{{robot.robot_id}}.png'
+                                        alt="" [style.border-color]="getPlayerColor(robot.robot_id)"
+                                        class="robot-image">
                                 </div>
                             </div>
                         </div>
@@ -64,7 +65,17 @@
                 </tr>
             </table>
         </div>
-        <!-- <div class="col-md-3" style="margin: 0; padding: 0;">
+        <div class="col-md-3">
+            <!-- A compact List of all killed robot ids-->
+            <div class="killed-robots">
+                <h3>Killed Robots</h3>
+                <ul>
+                    <li *ngFor="let robot of games[highlightedGame]?.round_states?.get(highlightedState)?.killed_robots">
+                        {{ robot }}
+                    </li>
+                </ul>
+
+            <!-- <div class="col-md-3" style="margin: 0; padding: 0;">
             <div class="row">
                 <div class="col-md-12">
                     <button type="button" class="btn btn-primary" (click)="sendCommand('MINING')">Mine</button>
@@ -97,5 +108,10 @@
             </div>
         </div> -->
 
-    </div>
+        </div>
+
+    </div> 
+    <ng-template #noGames>
+        <h1>No games available</h1>
+    </ng-template>
 </div>
