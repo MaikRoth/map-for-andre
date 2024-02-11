@@ -159,3 +159,41 @@ td {
     display: block;
   }
   
+  .killed-robots {
+    background-color: #f9f9f9; /* Light background for the container */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+    padding: 20px; /* Spacing inside the container */
+    max-width: 400px; /* Max width of the container */
+    margin: 20px auto; /* Centering the container */
+  }
+  
+  .killed-robots h3 {
+    color: #333; /* Dark color for the heading for contrast */
+    font-size: 24px; /* Larger font size for the heading */
+    margin-bottom: 15px; /* Space between the heading and the list */
+  }
+  
+  .killed-robots ul {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0; /* Remove default padding */
+    margin: 0; /* Remove default margin */
+  }
+  
+  .killed-robots li {
+    background-color: #fff; /* Light background for each list item */
+    border: 1px solid #ddd; /* Subtle border for each list item */
+    border-radius: 5px; /* Rounded corners for list items */
+    padding: 10px; /* Spacing inside each list item */
+    margin-bottom: 10px; /* Space between list items */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Very subtle shadow for each list item */
+    color: #555; /* Slightly dark text color for readability */
+    font-size: 16px; /* Comfortable font size for reading */
+    transition: transform 0.2s; /* Smooth transition for hover effect */
+  }
+  
+  .killed-robots li:hover {
+    transform: translateY(-3px); /* Slight raise effect on hover */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Enhanced shadow on hover for depth */
+  }
+  
