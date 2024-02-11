@@ -69,12 +69,11 @@
             <div class="killed-robots">
                 <h3>Killed Robots</h3>
                 <ul>
-                    <li
-                        *ngFor="let robot of games[highlightedGame]?.round_states?.get(highlightedState)?.player_name_player_map?.TheLegens27?.killed_robots">
-                        {{ robot }}
-                    </li>
+                  <li *ngFor="let robot of games[highlightedGame]?.round_states[highlightedRound]?.player_name_player_map[highlightedPlayer]?.killed_robots | keyvalue">
+                    {{ robot.key }}
+                  </li>
                 </ul>
-            </div>
+              </div>
         </div>
     </div>
     <ng-template #noGames>
