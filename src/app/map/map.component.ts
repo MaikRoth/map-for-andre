@@ -95,13 +95,15 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
       }
     }
   }
-  formatAmount(amount: number): string {
+  formatAmount(amount) {
     if (amount >= 1000) {
-      const formatted = (amount / 1000).toFixed(1);
-      return `${formatted}k`;
+      const thousands = Math.floor(amount / 1000); 
+      const hundred = Math.floor((amount % 1000) / 100); 
+      return `${thousands}.${hundred}k`;
     }
     return amount.toString();
   }
+  
   sendCommand(command: string, upgrade: string = "") {
     switch (command) {
       case "SELLING":
