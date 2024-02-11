@@ -52,7 +52,7 @@
                             </ng-template>
                             <div class="robot-container">
                                 <div *ngFor="let robot of getRobotsOnPlanet(planet.planet_id)">
-                                    <img src='https://robohash.org/{{robot.robot_id}}.png' alt=""
+                                    <img *ngIf="robot.health > 0" src='https://robohash.org/{{robot.robot_id}}.png' alt=""
                                         [style.border-color]="getPlayerColor(robot.robot_id)" class="robot-image">
                                 </div>
                             </div>
