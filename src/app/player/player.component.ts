@@ -40,7 +40,7 @@ export class PlayerComponent implements OnChanges{
     for (const robotId in killedRobots) {
       if (killedRobots.hasOwnProperty(robotId)) {
         const enemyRobotId = killedRobots[robotId][1];
-        data.push([robotId, enemyRobotId]);
+        data.push([robotId, enemyRobotId[1].robot_id]);
       }
     }
     

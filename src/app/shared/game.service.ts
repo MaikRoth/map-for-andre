@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import { Game, RoundState } from './types';
-import { BehaviorSubject, Observable, interval, map, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, interval, map, switchMap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -26,8 +26,12 @@ export class GameService {
           )
         }));
         return games;
-      })
-    );
+      }),
+      catchError(error => {
+        console.log(error);
+        return [];
+      }
+    ));
   }
 
   createGame(params) {
