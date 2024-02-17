@@ -8,7 +8,7 @@ import { Game, Planet, Player, Robot, RoundState } from '../shared/types';
   styleUrl: './map.component.css'
 })
 export class MapComponent implements OnInit, OnChanges, OnDestroy {
-  killedRobotIds: string[] = [];
+  killedRobotsByPlayer: Map<string, string[]> = new Map<string, string[]>();
   games: Game[];
   highlightedGame: number | null = 0;
   isDropdownOpen: boolean = false;
@@ -23,54 +23,83 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
   }
   ngOnInit(): void {
-     this.gameSubscription = interval(1000).subscribe(() => {
-       this.gameService.fetchGames().subscribe(game => {
-         this.games = game;
-         if (this.games[this.highlightedGame]?.round_states) {
-           this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
-         }
+      this.gameSubscription = interval(1000).subscribe(() => {
+        this.gameService.fetchGames().subscribe(game => {
+          this.games = game;
+          if (this.games[this.highlightedGame]?.round_states) {
+            this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
+          }
 
-         if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
-           this.assignRandomColors();
-           this.colorsAssigned = true;
-         }
-       });
-       this.extractAndSetKilledRobotIds()
-     });
-    // this.games = [this.generateRandomGame(1, 5, 20)];
+          if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
+            this.assignRandomColors();
+            this.colorsAssigned = true;
+          }
+        });
+        this.extractAndSetKilledRobotIds()
+      });
+    // this.games = [this.generateRandomGame(2, 5, 20)];
     // this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
     // this.assignRandomColors();
     // this.extractAndSetKilledRobotIds()
   }
 
   extractAndSetKilledRobotIds(): void {
-    const killedRobotIds: string[] = [];
+    const killedRsByPlayer: Map<string, string[]> = new Map();
 
-    if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)) {
-      this.games[this.highlightedGame]?.participating_players.forEach((playerName: string) => {
-
-
-        if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map[playerName]) {
-          const player = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map[playerName];
-
-          Object.values(player?.killed_robots || {}).forEach((killedRobots: any[]) => {
-            killedRobotIds.push(killedRobots[1].robot_id);
-          });
+    const currentRoundState = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState);
+    if (currentRoundState) {
+      this.games[this.highlightedGame].participating_players.forEach((playerName: string) => {
+        if ((this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map[playerName])) {
+          const player = currentRoundState.player_name_player_map[playerName];
+          if (player) {
+            player.killed_robots.forEach(killedRobots => {
+              const killedRobotIds: string[] = [];
+              killedRobots.forEach(killedRobot => {
+                killedRobotIds.push(killedRobot[1].robot_id);
+              });
+              killedRsByPlayer.set(playerName, killedRobotIds);
+            });
+          }
+        } else if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map.get(playerName)) {
+          const player = currentRoundState.player_name_player_map.get(playerName);
+          if (player) {
+            player.killed_robots.forEach(killedRobots => {
+              const killedRobotIds: string[] = [];
+              killedRobots.forEach(killedRobot => {
+                killedRobotIds.push(killedRobot[1].robot_id);
+              });
+              killedRsByPlayer.set(playerName, killedRobotIds);
+            });
+          }
         }
-        else if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map.get(playerName)) {
-          const player = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map.get(playerName);
-
-          Object.values(player?.killed_robots || {}).forEach((killedRobots: any[]) => {
-            killedRobotIds.push(killedRobots[1].robot_id);
-          });
-        }
-
       });
-      this.killedRobotIds = killedRobotIds;
+      this.killedRobotsByPlayer = killedRsByPlayer;
     }
 
-
   }
+  getPlanetRobotsGradient(planetId: string): string {
+    const robotsOnPlanet = this.getRobotsOnPlanet(planetId);
+    const playerCounts = new Map<string, number>();
+
+    robotsOnPlanet.forEach(robot => {
+      const count = playerCounts.get(robot.player_id) || 0;
+      playerCounts.set(robot.player_id, count + 1);
+    });
+
+    const totalRobots = robotsOnPlanet.length;
+    const colorStops: string[] = [];
+    let accumulatedPercentage = 0;
+
+    playerCounts.forEach((count, playerId) => {
+      const color = this.playerColors.get(playerId);
+      const percentage = (count / totalRobots) * 100;
+      colorStops.push(`${color} ${accumulatedPercentage}%`, `${color} ${accumulatedPercentage + percentage}%`);
+      accumulatedPercentage += percentage;
+    });
+
+    return `linear-gradient(to right, ${colorStops.join(', ')})`;
+  }
+
   assignRandomColors() {
     const players = this.games[this.highlightedGame].participating_players;
 
@@ -283,7 +312,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
           MINING: [],
           REGENERATE: [],
         },
-        killed_robots: this.generateRandomKilledRobots(playerName, numRobots),
+        killed_robots: this.generateRandomKilledRobots("adolf", numRobots),
       });
     });
 
@@ -297,13 +326,13 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     };
     return roundState;
   }
-  generateRandomKilledRobots(playerName: string, numRobots: number): Record<string, any[]> {
-    let killedRobots: Record<string, any[]> = {};
+  generateRandomKilledRobots(playerName: string, numRobots: number): Map<string, any[][]> {
+    let killedRobots: Map<string, any[][]> = new Map<string, any[][]>();
     for (let i = 0; i < numRobots; i++) {
-      const robotId = `robot_${Math.random().toString(36).substr(2, 9)}`;
-      killedRobots[robotId] = [playerName, {
+      const robotId = this.generateUUID();
+      killedRobots.set(robotId, [["adolf", {
         robot_id: robotId,
-        planet_id: `planet_${Math.random().toString(36).substr(2, 9)}`,
+        planet_id: this.generateUUID(),
         health: 0,//Math.floor(Math.random() * 3),
         energy: Math.floor(Math.random() * 20),
         levels: {
@@ -325,8 +354,9 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
           mineable_resources: [],
         },
         inventory: {},
-      }];
+      }]]);
     }
+
     return killedRobots;
   }
   generateRandomPlanets(planets_amount: number): Planet[] {
@@ -362,7 +392,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     const robots: Map<string, Robot> = new Map<string, Robot>();
     for (let i = 0; i < numRobots; i++) {
       const robotId = this.generateUUID();
-      robots[robotId] = {
+      robots.set(robotId, {
         robot_id: robotId,
         planet_id: '123',
         health: 1,//Math.floor(Math.random() * 3),
@@ -377,7 +407,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
           storage_level: ''
         },
         inventory: {}
-      };
+      });
     }
 
     return robots;

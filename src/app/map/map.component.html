@@ -52,7 +52,8 @@
                             </ng-template>
                             <div class="robot-container">
                                 <ng-container *ngIf="getRobotsOnPlanet(planet.planet_id).length > 1; else singleRobot">
-                                    <div class="robots-count">
+                                    <div class="robots-count"
+                                        [ngStyle]="{'background': getPlanetRobotsGradient(planet.planet_id)}">
                                         {{ getRobotsOnPlanet(planet.planet_id).length }}
                                     </div>
                                 </ng-container>
@@ -64,7 +65,7 @@
                                     </div>
                                 </ng-template>
                             </div>
-                            
+
                         </div>
                         <ng-template #voidCell>
                             <div class="void"></div>
@@ -74,12 +75,19 @@
             </table>
         </div>
         <div class="col-md-3">
+
             <div class="killed-robots">
                 <h3>Killed Robots</h3>
-                <ul>
-                  <li *ngFor="let robotId of killedRobotIds">{{ robotId }}</li>
-                </ul>
-              </div>
+                <div *ngFor="let player of killedRobotsByPlayer | keyvalue">
+                    <h4>{{ player.key }}</h4>
+                    <ul>
+                        <li *ngFor="let robot of player.value">
+                            - {{ robot }}
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
         </div>
     </div>
     <ng-template #noGames>

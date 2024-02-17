@@ -31,9 +31,9 @@ export type Player = {
     player_name: string,
     money: { amount: number },
     visited_planets: any[]
-    robots: any[];
+    robots: { [key: string]: Robot };
     commands: Commands,
-    killed_robots: {}
+    killed_robots: Map<string, any[][]>
 }
 
 export type Commands = {
