@@ -4,9 +4,13 @@
         <div class="player-money">Money: ${{ player.money.amount }}</div>
     </div>
     <div class="robot-container">
-        <div class="robot-info" *ngFor="let robot of getRobotValues(player.robots)">
-            <div class="robot-id " (click)="copyToClipboard(robot.robot_id)"><div class="clickable">Robot ID:</div> {{robot.robot_id}}</div>
-            <div class="planet-id " (click)="copyToClipboard(robot.planet_id)"><div class="clickable">Planet ID: </div>{{robot.planet_id}}</div>
+        <div class="robot-info" *ngFor="let robot of getRobotValues(player.player_name)">
+            <div class="robot-id " (click)="copyToClipboard(robot.robot_id)">
+                <div class="clickable">Robot ID:</div> {{robot.robot_id}}
+            </div>
+            <div class="planet-id " (click)="copyToClipboard(robot.planet_id)">
+                <div class="clickable">Planet ID: </div>{{robot.planet_id}}
+            </div>
             <div class="Vitals-title"><strong><u>Vitals:</u></strong></div>
             <div class="robot-health">Health: {{ robot.health }}</div>
             <div class="robot-energy">Energy: {{ robot.energy }}</div>
@@ -40,12 +44,6 @@
                 <div *ngIf="robot.inventory.GOLD !== undefined" class="inventory-item">GOLD: {{ robot.inventory.GOLD }}
                 </div>
             </div>
-            <div class="killed-robots">
-                <div class="title"><strong><u>Killed Robots:</u></strong></div>
-                <div *ngFor="let robotData of getKilledRobotData(player)">
-                    Robot ID: {{ robotData[0] }} (Enemy Robot ID: {{ robotData[1] }})
-                </div>
-              </div>
         </div>
     </div>
 </div>

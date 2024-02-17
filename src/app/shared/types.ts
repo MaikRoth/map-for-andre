@@ -44,3 +44,20 @@ export type Commands = {
     REGENERATE: any[],
     MOVEMENT: any[],
 }
+
+export type Robot = {
+    robot_id: string,
+    planet_id: string,
+    health: number,
+    energy: number,
+    levels: {
+        health_level: string,
+        damage_level: string,
+        mining_level: string,
+        mining_speed_level: string,
+        energy_level: string,
+        energy_regen_level: string,
+        storage_level: string
+    },
+    inventory: any
+}

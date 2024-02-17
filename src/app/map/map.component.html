@@ -32,7 +32,7 @@
         <div class="col-md-6">
             <table>
                 <tr *ngFor="let row of games[highlightedGame]?.round_states?.get(highlightedState)?.map?.planets">
-                    <td *ngFor="let planet of row">
+                    <td *ngFor="let planet of row" class="large-table-cell">
                         <div *ngIf="planet; else voidCell">
                             <div *ngIf="planet.resources; else noResource">
                                 <div class="planet-infos">
@@ -51,12 +51,20 @@
                                 <div class="no-resource"></div>
                             </ng-template>
                             <div class="robot-container">
-                                <div *ngFor="let robot of getRobotsOnPlanet(planet.planet_id)">
-                                    <img *ngIf="robot.health > 0" src='https://robohash.org/{{robot.robot_id}}.png'
-                                        alt="" [style.border-color]="getPlayerColor(robot.robot_id)"
-                                        class="robot-image">
-                                </div>
+                                <ng-container *ngIf="getRobotsOnPlanet(planet.planet_id).length > 1; else singleRobot">
+                                    <div class="robots-count">
+                                        {{ getRobotsOnPlanet(planet.planet_id).length }}
+                                    </div>
+                                </ng-container>
+                                <ng-template #singleRobot>
+                                    <div *ngFor="let robot of getRobotsOnPlanet(planet.planet_id)">
+                                        <img *ngIf="robot.health > 0" src='https://robohash.org/{{robot.robot_id}}.png'
+                                            alt="" [style.border-color]="getPlayerColor(robot.robot_id)"
+                                            class="robot-image">
+                                    </div>
+                                </ng-template>
                             </div>
+                            
                         </div>
                         <ng-template #voidCell>
                             <div class="void"></div>

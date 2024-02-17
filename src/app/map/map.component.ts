@@ -1,8 +1,7 @@
 import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { GameService } from '../shared/game.service';
 import { Subscription, interval } from 'rxjs';
-import { Game, Planet, Player, RoundState } from '../shared/types';
-
+import { Game, Planet, Player, Robot, RoundState } from '../shared/types';
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -18,43 +17,59 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   playerColors = new Map<string, string>();
   upgrade = ""
   private colorsAssigned: boolean = false;
-  private alwaysShowLast = true;
   private gameSubscription: Subscription;
 
   constructor(private gameService: GameService) {
 
   }
   ngOnInit(): void {
-   this.gameSubscription = interval(1000).subscribe(() => {
-     this.gameService.fetchGames().subscribe(game => {
-       this.games = game;
-       if (this.games[this.highlightedGame]?.round_states && this.alwaysShowLast) {
-         this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
-       }
+     this.gameSubscription = interval(1000).subscribe(() => {
+       this.gameService.fetchGames().subscribe(game => {
+         this.games = game;
+         if (this.games[this.highlightedGame]?.round_states) {
+           this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
+         }
 
-       if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
-         this.assignRandomColors();
-         this.colorsAssigned = true;
-       }
+         if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
+           this.assignRandomColors();
+           this.colorsAssigned = true;
+         }
+       });
+       this.extractAndSetKilledRobotIds()
      });
-   });
-    //this.games = [this.generateRandomGame()];    
-    this.extractAndSetKilledRobotIds()
+    // this.games = [this.generateRandomGame(1, 5, 20)];
+    // this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
+    // this.assignRandomColors();
+    // this.extractAndSetKilledRobotIds()
   }
+
   extractAndSetKilledRobotIds(): void {
-    
-    const killedRobots = this.games[this.highlightedGame]?.round_states.get(this.highlightedState)?.player_name_player_map?.get('TheLegend27')?.killed_robots;
-    if (killedRobots) {
-      this.killedRobotIds = [];
-      Object.values(killedRobots).forEach((robotKills: any[]) => {
-        robotKills.forEach(killDetails => {
-          const killedRobotDetails = killDetails[1];
-          if (killedRobotDetails && killedRobotDetails.robot_id) {
-            this.killedRobotIds.push(killedRobotDetails.robot_id);
-          }
-        });
+    const killedRobotIds: string[] = [];
+
+    if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)) {
+      this.games[this.highlightedGame]?.participating_players.forEach((playerName: string) => {
+
+
+        if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map[playerName]) {
+          const player = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map[playerName];
+
+          Object.values(player?.killed_robots || {}).forEach((killedRobots: any[]) => {
+            killedRobotIds.push(killedRobots[1].robot_id);
+          });
+        }
+        else if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map.get(playerName)) {
+          const player = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map.get(playerName);
+
+          Object.values(player?.killed_robots || {}).forEach((killedRobots: any[]) => {
+            killedRobotIds.push(killedRobots[1].robot_id);
+          });
+        }
+
       });
+      this.killedRobotIds = killedRobotIds;
     }
+
+
   }
   assignRandomColors() {
     const players = this.games[this.highlightedGame].participating_players;
@@ -88,18 +103,35 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   getRobotsOnPlanet(planetId: string): any[] {
     const robotsOnPlanet = [];
     const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
+
     if (playerData) {
-      for (const player of Object.values(playerData)) {
-        for (const robotId of Object.keys(player.robots)) {
-          const robot = player.robots[robotId];
-          if (robot.planet_id === planetId) {
-            robotsOnPlanet.push(robot);
+      if (playerData instanceof Map) {
+        playerData.forEach((player) => {
+          for (const robotId of Object.keys(player.robots)) {
+            const robot = player.robots[robotId];
+            if (robot.planet_id === planetId) {
+              robotsOnPlanet.push(robot);
+            }
+          }
+        });
+      } else if (typeof playerData === 'object') {
+        if (playerData) {
+          for (const player of Object.values<any>(playerData)) {
+            for (const robotId of Object.keys(player.robots)) {
+              const robot = player.robots[robotId];
+              if (robot.planet_id === planetId) {
+                robotsOnPlanet.push(robot);
+              }
+            }
           }
         }
+
       }
     }
+
     return robotsOnPlanet;
   }
+
   getPlayerColor(robotId: string) {
     const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
     if (playerData) {
@@ -120,114 +152,12 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     }
     return amount.toString();
   }
-
-  generateRandomGame(): Game {
-    const game: Game = {
-      game_id: Math.random().toString(36).substring(7),
-      participating_players: ["TheLegend27"],
-      current_round: 0,
-      max_rounds: 500,
-      max_players: 1,
-      round_states: new Map<string, RoundState>()
-    };
-
-    for (let i = 0; i < 5; i++) {
-      const player: Player = {
-        player_name: "TheLegend27",
-        money: {
-          amount: 500
-        },
-        visited_planets: [],
-        robots: [],
-        commands: {
-          MOVEMENT: [],
-          REGENERATE: [],
-          SELLING: [],
-          BATTLE: [],
-          BUYING: [],
-          MINING: []
-        },
-        killed_robots: this.generateKilledRobots(2) 
-      };
-
-      const planets: Planet[][] = this.generatePlanets(5,5); 
-      const indices: Map<string, number[]> = this.generateIndices(planets); 
-
-      const roundState: RoundState = {
-        round_number: i,
-        player_name_player_map: new Map([[player.player_name, player]]),
-        map: {
-          planets: planets,
-          indices: indices
-        }
-      };
-
-      game.round_states.set(i.toString(), roundState);
-    }
-    
-    return game;
-  }
-  generatePlanets(rows: number, cols: number): Planet[][] {
-    let planets: Planet[][] = [];
-    for (let i = 0; i < rows; i++) {
-      let row: Planet[] = [];
-      for (let j = 0; j < cols; j++) {
-        
-        const planet: Planet = {
-          planet_id: Math.random().toString(36).substring(7),
-          movement_difficulty: Math.floor(Math.random() * 10) + 1, 
-          resources: [
-            "COAL", 
-            Math.floor(Math.random() * 9000) + 1000,
-          ],
-          neighbours: {}, 
-        };
-        row.push(planet);
-      }
-      planets.push(row);
-    }
-    return planets;
-  }
-
-  generateIndices(planets: Planet[][]): Map<string, number[]> {
-    let indices = new Map<string, number[]>();
-    planets.forEach((row, rowIndex) => {
-      row.forEach((planet, colIndex) => {
-        indices.set(planet.planet_id, [rowIndex, colIndex]);
-      });
+  generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
     });
-    return indices;
   }
-  generateKilledRobots(numberOfRobots) {
-    let killedRobots = {};
-    for (let i = 0; i < numberOfRobots; i++) {
-      const killerRobotId = Math.random().toString(36).substring(7);
-      const killedRobotId = Math.random().toString(36).substring(7);
-      killedRobots[killerRobotId] = [
-        [
-          "Player1",
-          {
-            robot_id: killedRobotId,
-            planet_id: Math.random().toString(36).substring(7),
-            health: 0,
-            energy: 0,
-            levels: {
-              health_level: "LEVEL0",
-              damage_level: "LEVEL0",
-              mining_level: "LEVEL0",
-              mining_speed_level: "LEVEL0",
-              energy_level: "LEVEL0",
-              energy_regen_level: "LEVEL0",
-              storage_level: "LEVEL0"
-            },
-            inventory: {},
-          }
-        ]
-      ];
-    }
-    return killedRobots;
-  }
-
 
   sendCommand(command: string, upgrade: string = "") {
     switch (command) {
@@ -312,6 +242,145 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
       default:
         return ''
     }
+  }
+
+  generateRandomGame(numPlayers = 2, numRobotsPerPlayer = 5, numRounds = 20): Game {
+    const gameId = this.generateUUID();
+
+    const participatingPlayers = Array.from({ length: numPlayers }, (_, i) => `Player_${i + 1}`);
+
+    const roundStates: Map<string, RoundState> = new Map<string, RoundState>();
+    for (let roundNum = 0; roundNum <= numRounds; roundNum++) {
+      roundStates.set(roundNum.toString(), this.generateRandomRoundState(participatingPlayers, numRobotsPerPlayer, roundNum));
+    }
+
+    const game: Game = {
+      game_id: gameId,
+      participating_players: participatingPlayers,
+      current_round: 1,
+      max_rounds: numRounds,
+      max_players: numPlayers,
+      round_states: roundStates
+    };
+
+    return game;
+  }
+
+  generateRandomRoundState(players: string[], numRobots: number, roundNumber: number): RoundState {
+
+    let playerNamePlayerMap: Map<string, Player> = new Map<string, Player>();
+    players.forEach(playerName => {
+      playerNamePlayerMap.set(playerName, {
+        player_name: playerName,
+        money: { amount: 400 },
+        visited_planets: [],
+        robots: this.generateRobots(numRobots),
+        commands: {
+          MOVEMENT: [],
+          SELLING: [],
+          BUYING: [],
+          BATTLE: [],
+          MINING: [],
+          REGENERATE: [],
+        },
+        killed_robots: this.generateRandomKilledRobots(playerName, numRobots),
+      });
+    });
+
+    const roundState: RoundState = {
+      round_number: roundNumber,
+      player_name_player_map: playerNamePlayerMap,
+      map: {
+        indices: undefined,
+        planets: [this.generateRandomPlanets(10), this.generateRandomPlanets(10), this.generateRandomPlanets(10), this.generateRandomPlanets(10), this.generateRandomPlanets(10)]
+      }
+    };
+    return roundState;
+  }
+  generateRandomKilledRobots(playerName: string, numRobots: number): Record<string, any[]> {
+    let killedRobots: Record<string, any[]> = {};
+    for (let i = 0; i < numRobots; i++) {
+      const robotId = `robot_${Math.random().toString(36).substr(2, 9)}`;
+      killedRobots[robotId] = [playerName, {
+        robot_id: robotId,
+        planet_id: `planet_${Math.random().toString(36).substr(2, 9)}`,
+        health: 0,//Math.floor(Math.random() * 3),
+        energy: Math.floor(Math.random() * 20),
+        levels: {
+          health_level: "LEVEL0",
+          damage_level: "LEVEL0",
+          mining_level: "LEVEL0",
+          mining_speed_level: "LEVEL0",
+          energy_level: "LEVEL0",
+          energy_regen_level: "LEVEL0",
+          storage_level: "LEVEL0"
+        },
+        stats: {
+          damage: 1,
+          max_health: 1,
+          max_energy: 1,
+          energy_regen: 1,
+          mining_speed: 1,
+          max_storage: 1,
+          mineable_resources: [],
+        },
+        inventory: {},
+      }];
+    }
+    return killedRobots;
+  }
+  generateRandomPlanets(planets_amount: number): Planet[] {
+    const planets: Planet[] = [];
+    for (let i = 0; i < planets_amount; i++) {
+      let planetId = "";
+      if (i === 0) {
+        planetId = "123";
+      } else {
+        planetId = this.generateUUID();
+      }
+
+      planets.push({
+        planet_id: planetId,
+        movement_difficulty: Math.floor(Math.random() * 10),
+        neighbours: {
+          [this.generateUUID()]: this.generateUUID(),
+          [this.generateUUID()]: this.generateUUID(),
+          [this.generateUUID()]: this.generateUUID(),
+        },
+        resources: [this.generateRandomResource(), Math.floor(Math.random() * 1000)]
+      });
+    }
+
+    return planets;
+
+  }
+  generateRandomResource(): string {
+    const resources = ['COAL', 'IRON', 'GEM', 'GOLD', 'PLATINUM'];
+    return resources[Math.floor(Math.random() * resources.length)];
+  }
+  generateRobots(numRobots: number): any {
+    const robots: Map<string, Robot> = new Map<string, Robot>();
+    for (let i = 0; i < numRobots; i++) {
+      const robotId = this.generateUUID();
+      robots[robotId] = {
+        robot_id: robotId,
+        planet_id: '123',
+        health: 1,//Math.floor(Math.random() * 3),
+        energy: Math.floor(Math.random() * 20),
+        levels: {
+          health_level: '',
+          damage_level: '',
+          mining_level: '',
+          mining_speed_level: '',
+          energy_level: '',
+          energy_regen_level: '',
+          storage_level: ''
+        },
+        inventory: {}
+      };
+    }
+
+    return robots;
   }
 
   ngOnDestroy(): void {
