@@ -1,6 +1,6 @@
 import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { GameService } from '../shared/game.service';
-import { Subscription, interval } from 'rxjs';
+import { Subscription, interval, startWith, timeout } from 'rxjs';
 import { Game, Planet, Player, Robot, RoundState } from '../shared/types';
 @Component({
   selector: 'app-map',
@@ -24,45 +24,38 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
   }
   ngOnInit(): void {
-      this.gameSubscription = interval(1000).subscribe(() => {
-        this.gameService.fetchGames().subscribe(game => {
-          this.games = game;
-          if (this.games[this.highlightedGame]?.round_states) {
-            this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
-            this.games[this.highlightedGame].participating_players.forEach(player => {
-              const robotIds = [];
-              const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
-              if (playerData) {
-                if (playerData instanceof Map) {
-                  playerData.forEach((player) => {
-                    for (const robotId of Object.keys(player.robots)) {
-                      robotIds.push(robotId);
-                    }
-                  });
-                } else if (typeof playerData === 'object') {
-                  if (playerData) {
-                    for (const player of Object.values<any>(playerData)) {
-                      for (const robotId of Object.keys(player.robots)) {
-                        robotIds.push(robotId);
-                      }
-                    }
-                  }
+    this.gameSubscription = interval(8000).pipe(
+      startWith(0)
+    ).subscribe(() => {
+      this.gameService.fetchGames().subscribe(game => {
+        this.games = game;
+        if (this.games[this.highlightedGame]?.round_states) {
+          this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
+          const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
+
+          this.games[this.highlightedGame].participating_players.forEach(playerName => {
+            if (playerData) {
+              for (const player of Object.values<any>(playerData)) {
+                const robotIds = [];
+                for (const robotId of Object.keys(player.robots)) {
+                  robotIds.push(robotId);
                 }
+                this.playerRobotMap.set(playerName, robotIds);              
               }
-              this.playerRobotMap.set(player, robotIds);
-              console.log(this.playerRobotMap);
-              
-            });
-          }
+            }
+          });
+        }
 
-          if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
-            this.assignRandomColors();
-            this.colorsAssigned = true;
 
-          }
-        });
-        //this.extractAndSetKilledRobotIds()
+
+        if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
+          this.assignRandomColors();
+          this.colorsAssigned = true;
+
+        }
       });
+      //this.extractAndSetKilledRobotIds()
+    });
     // this.games = [this.generateRandomGame(2, 5, 20)];
     // this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
     // this.assignRandomColors();
@@ -75,18 +68,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     const currentRoundState = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState);
     if (currentRoundState) {
       this.games[this.highlightedGame].participating_players.forEach((playerName: string) => {
-        if ((this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map[playerName])) {
-          const player = currentRoundState.player_name_player_map[playerName];
-          if (player) {
-            player.killed_robots.forEach(killedRobots => {
-              const killedRobotIds: string[] = [];
-              killedRobots.forEach(killedRobot => {
-                killedRobotIds.push(killedRobot[1].robot_id);
-              });
-              killedRsByPlayer.set(playerName, killedRobotIds);
-            });
-          }
-        } else if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map.get(playerName)) {
+        if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map.get(playerName)) {
           const player = currentRoundState.player_name_player_map.get(playerName);
           if (player) {
             player.killed_robots.forEach(killedRobots => {
@@ -107,31 +89,25 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     const robotsOnPlanet = this.getRobotsOnPlanet(planetId);
     const playerCounts = new Map<string, number>();
 
-    // use playerRobotsMap to get the player ID for each robot
-    robotsOnPlanet.forEach(robot => {
-      const playerId = this.games[this.highlightedGame].participating_players.find(player => this.playerRobotMap.get(player).includes(robot.robot_id));
-      if (playerId) {
-        if (playerCounts.has(playerId)) {
-          playerCounts.set(playerId, playerCounts.get(playerId) + 1);
-        } else {
-          playerCounts.set(playerId, 1);
-        }
-      }
-    });
+    playerCounts.set("Player1", this.playerRobotMap.get("Player1").length);
+    playerCounts.set("Player2", this.playerRobotMap.get("Player2").length);
 
     const totalRobots = robotsOnPlanet.length;
-    const colorStops: string[] = [];
-    let accumulatedPercentage = 0;
-
-    playerCounts.forEach((count, playerId) => {
-      const color = this.playerColors.get(playerId);
-      const percentage = (count / totalRobots) * 100;
-      colorStops.push(`${color} ${accumulatedPercentage}%`, `${color} ${accumulatedPercentage + percentage}%`);
-      accumulatedPercentage += percentage;
-    });
-
-    return `linear-gradient(to right, ${colorStops.join(', ')})`;
+    const player1Count = playerCounts.get("Player1");
+    const player2Count = playerCounts.get("Player2");
+   
+    return `linear-gradient(to right, ${this.playerColors.get("Player1")} ${(totalRobots / player1Count)*100}%, ${this.playerColors.get("Player2")} ${(totalRobots / player2Count)*100}%)`;
   }
+
+  //generate a method to return a color that is different from the one that gets inputed so its high contrast
+  getContrastColor(color: string){
+    const r = parseInt(color.substring(1, 3), 16);
+    const g = parseInt(color.substring(3, 5), 16);
+    const b = parseInt(color.substring(5, 7), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 128) ? 'black' : 'white';
+  }
+
 
   assignRandomColors() {
     const players = this.games[this.highlightedGame].participating_players;
@@ -167,30 +143,17 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
 
     if (playerData) {
-      if (playerData instanceof Map) {
-        playerData.forEach((player) => {
-          for (const robotId of Object.keys(player.robots)) {
-            const robot = player.robots[robotId];
-            if (robot.planet_id === planetId) {
-              robotsOnPlanet.push(robot);
-            }
-          }
-        });
-      } else if (typeof playerData === 'object') {
-        if (playerData) {
-          for (const player of Object.values<any>(playerData)) {
-            for (const robotId of Object.keys(player.robots)) {
-              const robot = player.robots[robotId];
-              if (robot.planet_id === planetId) {
-                robotsOnPlanet.push(robot);
-              }
-            }
+      for (const player of Object.values<any>(playerData)) {
+        for (const robotId of Object.keys(player.robots)) {
+          const robot = player.robots[robotId];
+          if (robot.planet_id === planetId) {
+            robotsOnPlanet.push(robot);
           }
         }
-
       }
+
     }
-    
+
     return robotsOnPlanet;
   }
 
@@ -304,146 +267,6 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
       default:
         return ''
     }
-  }
-
-  generateRandomGame(numPlayers = 2, numRobotsPerPlayer = 5, numRounds = 20): Game {
-    const gameId = this.generateUUID();
-
-    const participatingPlayers = Array.from({ length: numPlayers }, (_, i) => `Player_${i + 1}`);
-
-    const roundStates: Map<string, RoundState> = new Map<string, RoundState>();
-    for (let roundNum = 0; roundNum <= numRounds; roundNum++) {
-      roundStates.set(roundNum.toString(), this.generateRandomRoundState(participatingPlayers, numRobotsPerPlayer, roundNum));
-    }
-
-    const game: Game = {
-      game_id: gameId,
-      participating_players: participatingPlayers,
-      current_round: 1,
-      max_rounds: numRounds,
-      max_players: numPlayers,
-      round_states: roundStates
-    };
-
-    return game;
-  }
-
-  generateRandomRoundState(players: string[], numRobots: number, roundNumber: number): RoundState {
-
-    let playerNamePlayerMap: Map<string, Player> = new Map<string, Player>();
-    players.forEach(playerName => {
-      playerNamePlayerMap.set(playerName, {
-        player_name: playerName,
-        money: { amount: 400 },
-        visited_planets: [],
-        robots: this.generateRobots(numRobots),
-        commands: {
-          MOVEMENT: [],
-          SELLING: [],
-          BUYING: [],
-          BATTLE: [],
-          MINING: [],
-          REGENERATE: [],
-        },
-        killed_robots: this.generateRandomKilledRobots("adolf", numRobots),
-      });
-    });
-
-    const roundState: RoundState = {
-      round_number: roundNumber,
-      player_name_player_map: playerNamePlayerMap,
-      map: {
-        indices: undefined,
-        planets: [this.generateRandomPlanets(10), this.generateRandomPlanets(10), this.generateRandomPlanets(10), this.generateRandomPlanets(10), this.generateRandomPlanets(10)]
-      }
-    };
-    return roundState;
-  }
-  generateRandomKilledRobots(playerName: string, numRobots: number): Map<string, any[][]> {
-    let killedRobots: Map<string, any[][]> = new Map<string, any[][]>();
-    for (let i = 0; i < numRobots; i++) {
-      const robotId = this.generateUUID();
-      killedRobots.set(robotId, [["adolf", {
-        robot_id: robotId,
-        planet_id: this.generateUUID(),
-        health: 0,//Math.floor(Math.random() * 3),
-        energy: Math.floor(Math.random() * 20),
-        levels: {
-          health_level: "LEVEL0",
-          damage_level: "LEVEL0",
-          mining_level: "LEVEL0",
-          mining_speed_level: "LEVEL0",
-          energy_level: "LEVEL0",
-          energy_regen_level: "LEVEL0",
-          storage_level: "LEVEL0"
-        },
-        stats: {
-          damage: 1,
-          max_health: 1,
-          max_energy: 1,
-          energy_regen: 1,
-          mining_speed: 1,
-          max_storage: 1,
-          mineable_resources: [],
-        },
-        inventory: {},
-      }]]);
-    }
-
-    return killedRobots;
-  }
-  generateRandomPlanets(planets_amount: number): Planet[] {
-    const planets: Planet[] = [];
-    for (let i = 0; i < planets_amount; i++) {
-      let planetId = "";
-      if (i === 0) {
-        planetId = "123";
-      } else {
-        planetId = this.generateUUID();
-      }
-
-      planets.push({
-        planet_id: planetId,
-        movement_difficulty: Math.floor(Math.random() * 10),
-        neighbours: {
-          [this.generateUUID()]: this.generateUUID(),
-          [this.generateUUID()]: this.generateUUID(),
-          [this.generateUUID()]: this.generateUUID(),
-        },
-        resources: [this.generateRandomResource(), Math.floor(Math.random() * 1000)]
-      });
-    }
-
-    return planets;
-
-  }
-  generateRandomResource(): string {
-    const resources = ['COAL', 'IRON', 'GEM', 'GOLD', 'PLATINUM'];
-    return resources[Math.floor(Math.random() * resources.length)];
-  }
-  generateRobots(numRobots: number): any {
-    const robots: Map<string, Robot> = new Map<string, Robot>();
-    for (let i = 0; i < numRobots; i++) {
-      const robotId = this.generateUUID();
-      robots.set(robotId, {
-        robot_id: robotId,
-        planet_id: '123',
-        health: 1,//Math.floor(Math.random() * 3),
-        energy: Math.floor(Math.random() * 20),
-        levels: {
-          health_level: '',
-          damage_level: '',
-          mining_level: '',
-          mining_speed_level: '',
-          energy_level: '',
-          energy_regen_level: '',
-          storage_level: ''
-        },
-        inventory: {}
-      });
-    }
-
-    return robots;
   }
 
   ngOnDestroy(): void {

@@ -14,7 +14,6 @@ export class PlayerComponent implements OnChanges {
 
 
   displayedPlayers: Player[] = [];
-  private playersRobotsCache: { [playerName: string]: { orderedRobots: any[], robotsCache: { [robotId: string]: any } } } = {};
   
 
   ngOnChanges(changes: SimpleChanges) {
@@ -28,37 +27,16 @@ export class PlayerComponent implements OnChanges {
         .map(playerName => this.playerData.get(playerName))
         .filter(player => player !== undefined);
     }
-    this.updatePlayersRobotsCache();
-
   }
   mapValues(map: Map<any, any>): any[] {
     return Array.from(map.values());
   }
 
-  updatePlayersRobotsCache(): void {
-    this.playerData.forEach((player, playerName) => {
-      if (!this.playersRobotsCache[playerName]) {
-        this.playersRobotsCache[playerName] = { orderedRobots: [], robotsCache: {} };
-      }
-
-      const playerRobotsCache = this.playersRobotsCache[playerName].robotsCache;
-      const orderedRobots = this.playersRobotsCache[playerName].orderedRobots;
-
-      Object.entries(player.robots || {}).forEach(([robotId, robot]) => {
-        if (!playerRobotsCache[robotId]) {
-          playerRobotsCache[robotId] = robot;
-          orderedRobots.push(robot);
-        } else {
-          playerRobotsCache[robotId] = robot;
-        }
-      });
-
-    });
-  }
-
-  getRobotValues(playerName: string): any[] {
-    if (this.playersRobotsCache[playerName]) {
-      return this.playersRobotsCache[playerName].orderedRobots.filter(robot => robot.health > 0);
+  getRobotValues(playerName: string): Robot[] {
+    const player = this.playerData.get(playerName);
+    
+    if (player && typeof player.robots === "object") {
+      return Object.values(player.robots);
     }
     return [];
   }

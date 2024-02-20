@@ -52,10 +52,11 @@
                             </ng-template>
                             <div class="robot-container">
                                 <ng-container *ngIf="getRobotsOnPlanet(planet.planet_id).length > 1; else singleRobot">
-                                    <div class="robots-count"
-                                        [ngStyle]="{'background': getPlanetRobotsGradient(planet.planet_id)}">
+                                    <div class="robots-count" 
+                                        [ngStyle]="{'background': getPlanetRobotsGradient(planet.planet_id), 'color': getContrastColor(getPlanetRobotsGradient(planet.planet_id))}">
                                         {{ getRobotsOnPlanet(planet.planet_id).length }}
                                     </div>
+                                    
                                 </ng-container>
                                 <ng-template #singleRobot>
                                     <div *ngFor="let robot of getRobotsOnPlanet(planet.planet_id)">

@@ -3,8 +3,8 @@ table {
 }
 
 td {
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
   border: 1px solid black;
   text-align: center;
   vertical-align: middle;
@@ -47,10 +47,10 @@ td {
 }
 
 .robot-image {
-  width: 12px;
-  height: 12px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
-  border: 1px solid black;
+  border: 3px solid black;
   margin-right: 2px;
   margin-bottom: 2px;
   display: inline-block;
@@ -75,8 +75,8 @@ td {
 
 
 .resource-image {
-  width: 16px;
-  height: 16px;
+  width: 25px;
+  height: 25px;
   position: absolute;
   top: 0;
   left: 0;
