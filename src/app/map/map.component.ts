@@ -14,6 +14,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   isDropdownOpen: boolean = false;
   highlightedState: string = '0';
   roundKeys: string[] = [];
+  playerRobotMap: Map<string, string[]> = new Map<string, string[]>();
   playerColors = new Map<string, string>();
   upgrade = ""
   private colorsAssigned: boolean = false;
@@ -28,14 +29,39 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
           this.games = game;
           if (this.games[this.highlightedGame]?.round_states) {
             this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
+            this.games[this.highlightedGame].participating_players.forEach(player => {
+              const robotIds = [];
+              const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
+              if (playerData) {
+                if (playerData instanceof Map) {
+                  playerData.forEach((player) => {
+                    for (const robotId of Object.keys(player.robots)) {
+                      robotIds.push(robotId);
+                    }
+                  });
+                } else if (typeof playerData === 'object') {
+                  if (playerData) {
+                    for (const player of Object.values<any>(playerData)) {
+                      for (const robotId of Object.keys(player.robots)) {
+                        robotIds.push(robotId);
+                      }
+                    }
+                  }
+                }
+              }
+              this.playerRobotMap.set(player, robotIds);
+              console.log(this.playerRobotMap);
+              
+            });
           }
 
           if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
             this.assignRandomColors();
             this.colorsAssigned = true;
+
           }
         });
-        this.extractAndSetKilledRobotIds()
+        //this.extractAndSetKilledRobotIds()
       });
     // this.games = [this.generateRandomGame(2, 5, 20)];
     // this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
@@ -81,9 +107,16 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     const robotsOnPlanet = this.getRobotsOnPlanet(planetId);
     const playerCounts = new Map<string, number>();
 
+    // use playerRobotsMap to get the player ID for each robot
     robotsOnPlanet.forEach(robot => {
-      const count = playerCounts.get(robot.player_id) || 0;
-      playerCounts.set(robot.player_id, count + 1);
+      const playerId = this.games[this.highlightedGame].participating_players.find(player => this.playerRobotMap.get(player).includes(robot.robot_id));
+      if (playerId) {
+        if (playerCounts.has(playerId)) {
+          playerCounts.set(playerId, playerCounts.get(playerId) + 1);
+        } else {
+          playerCounts.set(playerId, 1);
+        }
+      }
     });
 
     const totalRobots = robotsOnPlanet.length;
@@ -157,7 +190,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
       }
     }
-
+    
     return robotsOnPlanet;
   }
 
