@@ -34,29 +34,15 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     // this.extractAndSetKilledRobotIds()
   }
 
-  extractAndSetKilledRobotIds(): void {
-    const killedRsByPlayer: Map<string, string[]> = new Map();
+  calculateTotalKilledRobots(killedRobots: {[robotId: string]: any[]}): number {
+    let totalKilled = 0;
+    Object.values(killedRobots).forEach(robots => {
+        // Assuming each entry in robots is an array of kills by that robot
+        totalKilled += robots.length;
+    });
+    return totalKilled;
+}
 
-    const currentRoundState = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState);
-    if (currentRoundState) {
-      this.games[this.highlightedGame].participating_players.forEach((playerName: string) => {
-        if (this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map.get(playerName)) {
-          const player = currentRoundState.player_name_player_map.get(playerName);
-          if (player) {
-            player.killed_robots.forEach(killedRobots => {
-              const killedRobotIds: string[] = [];
-              killedRobots.forEach(killedRobot => {
-                killedRobotIds.push(killedRobot[1].robot_id);
-              });
-              killedRsByPlayer.set(playerName, killedRobotIds);
-            });
-          }
-        }
-      });
-      this.killedRobotsByPlayer = killedRsByPlayer;
-    }
-
-  }
   updateFetchInterval(): void {
     if (this.fetchMode === 'automatic') {
       this.startAutomaticFetch();
@@ -76,7 +62,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   }
   fetch() {
     console.log('fetching');
-    
+
     this.gameService.fetchGames().subscribe(game => {
       this.games = game;
       if (this.games[this.highlightedGame]?.round_states) {
@@ -119,6 +105,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     const robotsOnPlanet = this.getRobotsOnPlanet(planetId);
     const playerCounts = new Map<string, number>();
   
+    // Count robots per player on the planet
     robotsOnPlanet.forEach(robot => {
       const playerName = this.getPlayerNameForRobot(robot);
       if (playerName) {
@@ -128,27 +115,29 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     });
   
     const totalRobots = robotsOnPlanet.length;
-    const sortedPlayerCounts = new Map([...playerCounts.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+    // Sort playerCounts by player name
+    const sortedPlayerCounts = [...playerCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   
-    const playerPercentiles = [];
+    // Convert to array of objects with name and cumulative percentile
     let cumulativePercentile = 0;
-    for (const [playerName, robotCount] of sortedPlayerCounts) {
-      const percentile = (robotCount / totalRobots) * 100;
-      playerPercentiles.push({ name: playerName, percentile: cumulativePercentile });
-      cumulativePercentile += percentile;
-    }
-  
-    let gradientString = 'linear-gradient(to right';
-    playerPercentiles.forEach((playerData, index) => {
-      gradientString += `, ${this.playerColors.get(playerData.name)} ${playerData.percentile}%`;
-      if (index < playerPercentiles.length - 1) {
-        gradientString += ` ${playerPercentiles[index + 1].percentile}%`;
+    const playerPercentiles = sortedPlayerCounts.map(([name, count], index) => {
+      if (index > 0) {
+        cumulativePercentile += (sortedPlayerCounts[index - 1][1] / totalRobots) * 100;
       }
+      return { name, startPercentile: cumulativePercentile, endPercentile: cumulativePercentile + (count / totalRobots) * 100 };
+    });
+  
+    // Construct gradient string
+    let gradientString = 'linear-gradient(to right';
+    playerPercentiles.forEach(({ name, startPercentile, endPercentile }) => {
+      const color = this.playerColors.get(name) || 'defaultFallbackColor';
+      gradientString += `, ${color} ${startPercentile.toFixed(2)}% ${endPercentile.toFixed(2)}%`;
     });
   
     return gradientString + ')';
   }
-
+  
+  
   getRobotsFromPlanetOfPlayer(planetId: string, playerName: string): Robot[] {
     const allRobotsOnPlanet = this.getRobotsOnPlanet(planetId);
     const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
@@ -272,6 +261,6 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   }
   ngOnDestroy(): void {
     this.gameSubscription.unsubscribe()
-    this.stopAutomaticFetch(); 
+    this.stopAutomaticFetch();
   }
 }
