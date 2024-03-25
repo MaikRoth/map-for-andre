@@ -24,38 +24,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
   }
   ngOnInit(): void {
-    this.gameSubscription = interval(8000).pipe(
-      startWith(0)
-    ).subscribe(() => {
-      this.gameService.fetchGames().subscribe(game => {
-        this.games = game;
-        if (this.games[this.highlightedGame]?.round_states) {
-          this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
-          const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
 
-          this.games[this.highlightedGame].participating_players.forEach(playerName => {
-            if (playerData) {
-              for (const player of Object.values<any>(playerData)) {
-                const robotIds = [];
-                for (const robotId of Object.keys(player.robots)) {
-                  robotIds.push(robotId);
-                }
-                this.playerRobotMap.set(playerName, robotIds);              
-              }
-            }
-          });
-        }
-
-
-
-        if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
-          this.assignRandomColors();
-          this.colorsAssigned = true;
-
-        }
-      });
-      //this.extractAndSetKilledRobotIds()
-    });
     // this.games = [this.generateRandomGame(2, 5, 20)];
     // this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
     // this.assignRandomColors();
@@ -85,22 +54,96 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     }
 
   }
+  fetch() {
+    console.log('fetching');
+    
+    this.gameService.fetchGames().subscribe(game => {
+      this.games = game;
+      if (this.games[this.highlightedGame]?.round_states) {
+        this.roundKeys = Array.from(this.games[this.highlightedGame].round_states.keys());
+        const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
+
+        this.games[this.highlightedGame].participating_players.forEach(playerName => {
+          if (playerData) {
+            for (const player of Object.values<any>(playerData)) {
+              const robotIds = [];
+              for (const robotId of Object.keys(player.robots)) {
+                robotIds.push(robotId);
+              }
+              this.playerRobotMap.set(playerName, robotIds);
+            }
+          }
+        });
+      }
+
+      if (this.games[this.highlightedGame]?.participating_players && !this.colorsAssigned) {
+        this.assignRandomColors();
+        this.colorsAssigned = true;
+      }
+    });
+  }
+  getPlayerNameForRobot(robot: Robot): string | null {
+    const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
+
+    if (playerData) {
+      for (const player of Object.values(playerData)) {
+        if (player.robots[robot.robot_id]) {
+          return player.player_name;
+        }
+      }
+    }
+
+    return null;
+  }
   getPlanetRobotsGradient(planetId: string): string {
     const robotsOnPlanet = this.getRobotsOnPlanet(planetId);
     const playerCounts = new Map<string, number>();
-
-    playerCounts.set("Player1", this.playerRobotMap.get("Player1").length);
-    playerCounts.set("Player2", this.playerRobotMap.get("Player2").length);
-
+  
+    robotsOnPlanet.forEach(robot => {
+      const playerName = this.getPlayerNameForRobot(robot);
+      if (playerName) {
+        const currentCount = playerCounts.get(playerName) || 0;
+        playerCounts.set(playerName, currentCount + 1);
+      }
+    });
+  
     const totalRobots = robotsOnPlanet.length;
-    const player1Count = playerCounts.get("Player1");
-    const player2Count = playerCounts.get("Player2");
-   
-    return `linear-gradient(to right, ${this.playerColors.get("Player1")} ${(totalRobots / player1Count)*100}%, ${this.playerColors.get("Player2")} ${(totalRobots / player2Count)*100}%)`;
+    const sortedPlayerCounts = new Map([...playerCounts.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+  
+    const playerPercentiles = [];
+    let cumulativePercentile = 0;
+    for (const [playerName, robotCount] of sortedPlayerCounts) {
+      const percentile = (robotCount / totalRobots) * 100;
+      playerPercentiles.push({ name: playerName, percentile: cumulativePercentile });
+      cumulativePercentile += percentile;
+    }
+  
+    let gradientString = 'linear-gradient(to right';
+    playerPercentiles.forEach((playerData, index) => {
+      gradientString += `, ${this.playerColors.get(playerData.name)} ${playerData.percentile}%`;
+      if (index < playerPercentiles.length - 1) {
+        gradientString += ` ${playerPercentiles[index + 1].percentile}%`;
+      }
+    });
+  
+    return gradientString + ')';
   }
 
-  //generate a method to return a color that is different from the one that gets inputed so its high contrast
-  getContrastColor(color: string){
+  getRobotsFromPlanetOfPlayer(planetId: string, playerName: string): Robot[] {
+    const allRobotsOnPlanet = this.getRobotsOnPlanet(planetId);
+    const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
+    if (playerData) {
+      for (const player of Object.values(playerData)) {
+        if (player.player_name === playerName) {
+          return allRobotsOnPlanet.filter(robot => player.robots[robot.robot_id]);
+        }
+      }
+    }
+
+  }
+
+
+  getContrastColor(color: string) {
     const r = parseInt(color.substring(1, 3), 16);
     const g = parseInt(color.substring(3, 5), 16);
     const b = parseInt(color.substring(5, 7), 16);
@@ -138,7 +181,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   setState(round: string) {
     this.highlightedState = round;
   }
-  getRobotsOnPlanet(planetId: string): any[] {
+  getRobotsOnPlanet(planetId: string): Robot[] {
     const robotsOnPlanet = [];
     const playerData = this.games[this.highlightedGame]?.round_states?.get(this.highlightedState)?.player_name_player_map;
 
@@ -169,6 +212,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
       }
     }
   }
+
   formatAmount(amount) {
     if (amount >= 1000) {
       const thousands = Math.floor(amount / 1000);
@@ -177,79 +221,8 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     }
     return amount.toString();
   }
-  generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
 
-  sendCommand(command: string, upgrade: string = "") {
-    switch (command) {
-      case "SELLING":
-        const params4 = [
-          {
-            player_name: "TheLegend27",
-            game_id: this.games[this.highlightedGame].game_id,
-            command_type: command,
-            command_object: {
-              robot_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0]}`,
 
-            }
-          }
-        ]
-        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params4)
-      case "BUYING":
-        const params2 = [
-          {
-            player_name: "TheLegend27", game_id: this.games[this.highlightedGame].game_id,
-            command_type: command,
-            command_object: {
-              item_name: "ROBOT",
-              item_quantity: 1
-            }
-          }
-        ]
-        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params2)
-      case "MINING":
-        const params1 = [
-          {
-            player_name: "TheLegend27", game_id: this.games[this.highlightedGame].game_id,
-            command_type: command,
-            command_object: {
-              robot_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0]}`,
-              target_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0].planet_id}`
-            }
-          }
-        ]
-        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params1)
-        break;
-      case "MOVEMENT":
-        const params3 = [
-          {
-            player_name: "TheLegend27", game_id: this.games[this.highlightedGame].game_id,
-            command_type: command,
-            command_object: {
-              robot_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0]}`,
-              target_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0].planet_id}`
-            }
-          }
-        ]
-        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params3)
-        break;
-      default:
-        const params = [
-          {
-            player_name: "TheLegend27", game_id: this.games[this.highlightedGame].game_id,
-            command_type: "REGENERATE",
-            command_object: {
-              robot_id: `${this.games[this.highlightedGame].round_states[this.highlightedState].player_name_player_map.TheLegend27.robots.keys()[0]}`,
-            }
-          }
-        ]
-        this.gameService.sendCommand(this.games[this.highlightedGame].game_id, params)
-    }
-  }
   getResourceImage(resource: string) {
     switch (resource) {
       case 'COAL':
