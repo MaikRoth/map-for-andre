@@ -63,7 +63,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
   startAutomaticFetch(): void {
-    this.stopAutomaticFetch(); // Stop current fetching process if any
+    this.stopAutomaticFetch(); // Always stop before starting to avoid multiple subscriptions
     this.fetchSubscription = interval(this.fetchInterval * 1000).subscribe(() => {
       this.fetch();
     });
@@ -71,7 +71,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   stopAutomaticFetch(): void {
     if (this.fetchSubscription) {
       this.fetchSubscription.unsubscribe();
-      this.fetchSubscription = null;
+      this.fetchSubscription = null; // Clear the subscription reference
     }
   }
   fetch() {
@@ -261,7 +261,15 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
         return ''
     }
   }
-
+  onFetchModeChange(): void {
+    if (this.fetchMode === 'manual') {
+      // Stop automatic fetching
+      this.stopAutomaticFetch();
+    } else if (this.fetchMode === 'automatic') {
+      // Start automatic fetching with the current interval
+      this.startAutomaticFetch();
+    }
+  }
   ngOnDestroy(): void {
     this.gameSubscription.unsubscribe()
     this.stopAutomaticFetch(); 

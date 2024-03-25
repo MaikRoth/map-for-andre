@@ -27,13 +27,13 @@
           <div class="col-sm-12">
             <!-- Fetch Mode Selection -->
             <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="fetchMode" id="manualFetch" value="manual" [(ngModel)]="fetchMode">
-              <label class="form-check-label" for="manualFetch">Manual</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="fetchMode" id="automaticFetch" value="automatic" [(ngModel)]="fetchMode">
-              <label class="form-check-label" for="automaticFetch">Automatic</label>
-            </div>
+                <input class="form-check-input" type="radio" name="fetchMode" id="manualFetch" value="manual" [(ngModel)]="fetchMode" (change)="onFetchModeChange()">
+                <label class="form-check-label" for="manualFetch">Manual</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="fetchMode" id="automaticFetch" value="automatic" [(ngModel)]="fetchMode" (change)="onFetchModeChange()">
+                <label class="form-check-label" for="automaticFetch">Automatic</label>
+              </div>
           </div>
         </div>
         <div class="row mt-2" *ngIf="fetchMode === 'automatic'">
