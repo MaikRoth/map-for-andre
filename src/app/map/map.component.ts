@@ -19,6 +19,9 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
   upgrade = ""
   private colorsAssigned: boolean = false;
   private gameSubscription: Subscription;
+  fetchMode: 'manual' | 'automatic' = 'manual';
+  fetchInterval: number = 10;
+  private fetchSubscription: Subscription | null = null;
 
   constructor(private gameService: GameService) {
 
@@ -53,6 +56,23 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
       this.killedRobotsByPlayer = killedRsByPlayer;
     }
 
+  }
+  updateFetchInterval(): void {
+    if (this.fetchMode === 'automatic') {
+      this.startAutomaticFetch();
+    }
+  }
+  startAutomaticFetch(): void {
+    this.stopAutomaticFetch(); // Stop current fetching process if any
+    this.fetchSubscription = interval(this.fetchInterval * 1000).subscribe(() => {
+      this.fetch();
+    });
+  }
+  stopAutomaticFetch(): void {
+    if (this.fetchSubscription) {
+      this.fetchSubscription.unsubscribe();
+      this.fetchSubscription = null;
+    }
   }
   fetch() {
     console.log('fetching');
@@ -244,5 +264,6 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.gameSubscription.unsubscribe()
+    this.stopAutomaticFetch(); 
   }
 }

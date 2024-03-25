@@ -22,7 +22,34 @@
             </div>
         </div>
     </div>
-    <button class="btn btn-primary" (click)="fetch()">Fetch</button>
+    <div class="container mt-3">
+        <div class="row">
+          <div class="col-sm-12">
+            <!-- Fetch Mode Selection -->
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="fetchMode" id="manualFetch" value="manual" [(ngModel)]="fetchMode">
+              <label class="form-check-label" for="manualFetch">Manual</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="fetchMode" id="automaticFetch" value="automatic" [(ngModel)]="fetchMode">
+              <label class="form-check-label" for="automaticFetch">Automatic</label>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-2" *ngIf="fetchMode === 'automatic'">
+          <div class="col-sm-4">
+            <div class="form-group">
+              <label for="fetchInterval">Fetch Interval (seconds):</label>
+              <input type="number" class="form-control" id="fetchInterval" [(ngModel)]="fetchInterval" (change)="updateFetchInterval()">
+            </div>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <div class="col-sm-12">
+            <button class="btn btn-primary" *ngIf="fetchMode === 'manual'" (click)="fetch()">Fetch Game Data</button>
+          </div>
+        </div>
+      </div>
     <div class="row" *ngIf="games; else noGames">
         <div class="col-md-3 scrollable-container">
             <app-player [participatingPlayers]="games[highlightedGame]?.participating_players"
